@@ -1,0 +1,53 @@
+Name        DTACK16;
+PartNo      00;
+Date        07/21/2023
+Revision    01;
+Designer    rezafouladian;
+Company     None;
+Assembly    None;
+Location    None;
+Device      g16v8;
+
+
+PIN 1           =   CLOCK;
+PIN [2..5]      =   [A23..20];
+PIN 6           =   !AS;
+PIN [7..9]      =   [J4..6];
+PIN [12..14]    =   [J3..1];
+PIN 15          =   !DTACK;
+PIN [16..18]    =   [DELAY1..3];
+PIN 19          =   DTACK_SEL;
+
+FIELD ADDRESS   =   [A23..20];
+
+/* Define memory address ranges */
+PERMRAM         =   ADDRESS:[000000..0FFFFF];   /* Permanent 1MB RAM */
+EXPRAM1         =   ADDRESS:[100000..4FFFFF];   /* 1MB to 5MB */
+EXPRAM2         =   ADDRESS:[500000..8FFFFF];   /* 5MB to 9MB */
+PERMROM         =   ADDRESS:[900000..9FFFFF];   /* Permanent 1MB ROM */
+EXPROM          =   ADDRESS:[A00000..DFFFFF];   /* Expansion ROM space */
+PDSROM          =   ADDRESS:[E00000..EFFFFF];   /* PDS ROM space */
+
+/* Jumper setting mapping */
+DELAYPLUS1      =   J6;                         /* Add one clock pulse to the delay */
+DELAYPLUS2      =   J5;                         /* Add two clock pulses to the delay */
+SELPERM         =   J4;
+SELEXP1         =   J3;
+SELEXP2         =   J2;
+
+DTACK_SEL       =   (PERMRAM & SELPERM)
+                #   (EXPRAM1 & SELEXP1)
+                #   (EXPRAM2 & SELEXP2)
+                &   AS;
+
+DTACK.OE        =   DTACK_SEL;
+
+DELAY1.D        =   DTACK_SEL & DELAYPLUS1 # DELAYPLUS2;
+DELAY2.D        =   DTACK_SEL & DELAY1 & DELAYPLUS2;
+DELAY3.D        =   DTACK_SEL & DELAY2 & DELAYPLUS1;
+
+DTACK           =   (!DELAYPLUS1 & !DELAYPLUS2)
+                #   (DELAYPLUS1 & !DELAYPLUS2 & DELAY1)
+                #   (!DELAYPLUS1 & DELAYPLUS2 & DELAY2)
+                #   (DELAYPLUS1 & DELAYPLUS2 & DELAY3)
+                &   DTACK_SEL;
